@@ -22,7 +22,7 @@ public final class Slf4jMdcPreservedFactory {
 
   // Visible for testing only
   static final ContextCoordinator<Map<String, String>> CONTEXT_COORDINATOR =
-      new ContextCoordinator<>() {
+      new ContextCoordinator<Map<String, String>>() {
 
         @Nullable
         @Override

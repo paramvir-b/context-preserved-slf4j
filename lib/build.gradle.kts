@@ -11,7 +11,7 @@ plugins {
     `java-library`
     checkstyle
     jacoco
-    id("com.github.spotbugs") version "4.7.3"
+    id("com.github.spotbugs") version "5.2.1"
     id("org.checkerframework") version "0.6.19"
 }
 
@@ -23,6 +23,14 @@ repositories {
 
 group = "com.rokoder.concurrency"
 version = "1.0.0-snapshot"
+val artifactName = "context-preserved-slf4j"
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
 
 dependencies {
     // This dependency is exported to consumers, that is to say found on their compile classpath.
@@ -35,15 +43,13 @@ dependencies {
     implementation("org.slf4j:slf4j-api:2.0.5")
 
     // Use JUnit Jupiter for testing.
-    testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
-    testImplementation("org.mockito:mockito-core:4.10.0")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
+    testImplementation("org.mockito:mockito-core:4.11.0")
     testImplementation("org.hamcrest:hamcrest:2.2")
 
-    spotbugsPlugins("com.h3xstream.findsecbugs:findsecbugs-plugin:1.12.0")
-
-    compileOnly("org.checkerframework:checker-qual:3.28.0")
-    testCompileOnly("org.checkerframework:checker-qual:3.28.0")
-    checkerFramework("org.checkerframework:checker:3.28.0")
+    compileOnly("org.checkerframework:checker-qual:3.32.0")
+    testCompileOnly("org.checkerframework:checker-qual:3.32.0")
+    checkerFramework("org.checkerframework:checker:3.32.0")
 }
 
 checkstyle {
