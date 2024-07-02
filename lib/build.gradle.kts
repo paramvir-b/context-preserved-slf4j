@@ -8,17 +8,18 @@
 
 plugins {
     // Apply the java-library plugin for API and implementation separation.
-    `java-library`
-    checkstyle
-    jacoco
-    id("com.github.spotbugs") version "5.2.1"
-    id("org.checkerframework") version "0.6.19"
+    id("java-library")
+    id("maven-publish")
+    id("signing")
+    id("checkstyle")
+    id("jacoco")
+    id("com.github.spotbugs") version "6.0.18"
+    id("org.checkerframework") version "0.6.41"
 }
 
 repositories {
     // Use Maven Central for resolving dependencies.
     mavenCentral()
-    mavenLocal()
 }
 
 group = "com.rokoder.concurrency"
@@ -32,24 +33,96 @@ java {
     targetCompatibility = JavaVersion.VERSION_1_8
 }
 
+// More info https://docs.gradle.org/current/dsl/org.gradle.api.tasks.javadoc.Javadoc.html
+tasks.withType<Javadoc>().configureEach {
+    doFirst {
+        println(destinationDir.toString() + "/index.html")
+    }
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+
+            groupId = group.toString()
+            artifactId = artifactName
+            version = version
+
+            from(components["java"])
+
+            versionMapping {
+                usage("java-api") {
+                    fromResolutionOf("runtimeClasspath")
+                }
+                usage("java-runtime") {
+                    fromResolutionResult()
+                }
+            }
+
+            pom {
+                name.set(artifactName)
+                description.set("It provides thread local MDC context for Slf4j.")
+                url.set("https://github.com/paramvir-b/context-preserved-slf4j")
+                licenses {
+                    license {
+                        name.set("The MIT License")
+                        url.set("https://github.com/paramvir-b/context-preserved/LICENSE.txt")
+                    }
+                }
+                developers {
+                    developer {
+                        id.set("paramvir-b")
+                        name.set("Paramvir Bali")
+                        email.set("paramvir@rokoder.com")
+                    }
+                }
+                scm {
+                    connection.set("scm:git:https://github.com/paramvir-b/context-preserved-slf4j.git")
+                    developerConnection.set("scm:git:https://github.com/paramvir-b/context-preserved-slf4j.git")
+                    url.set("https://github.com/paramvir-b/context-preserved-slf4j")
+                }
+            }
+
+            repositories {
+                maven {
+                    val releasesRepoUrl = uri(layout.buildDirectory.dir("repos/releases"))
+                    val snapshotsRepoUrl = uri(layout.buildDirectory.dir("repos/snapshots"))
+                    url = uri(if (version.toString().endsWith("snapshot")) snapshotsRepoUrl else releasesRepoUrl)
+                }
+            }
+        }
+    }
+}
+
+signing {
+    sign(publishing.publications["mavenJava"])
+}
+
+tasks.javadoc {
+    if (JavaVersion.current().isJava9Compatible) {
+        (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
+    }
+}
+
+
 dependencies {
     // This dependency is exported to consumers, that is to say found on their compile classpath.
-    api("org.apache.commons:commons-math3:3.6.1")
+    api("org.slf4j:slf4j-api:1.7+")
 
     // This dependency is used internally, and not exposed to consumers on their own compile classpath.
     implementation("com.google.code.findbugs:jsr305:3.0.2")
+    implementation("com.rokoder.concurrency:context-preserved:1.0.+")
     implementation("com.github.spotbugs:spotbugs-annotations:4.7.3")
-    implementation("com.rokoder.concurrency:context-preserved:1.0.0-snapshot")
-    implementation("org.slf4j:slf4j-api:2.0.5")
 
     // Use JUnit Jupiter for testing.
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
     testImplementation("org.mockito:mockito-core:4.11.0")
     testImplementation("org.hamcrest:hamcrest:2.2")
 
-    compileOnly("org.checkerframework:checker-qual:3.32.0")
-    testCompileOnly("org.checkerframework:checker-qual:3.32.0")
-    checkerFramework("org.checkerframework:checker:3.32.0")
+    val checkerVersion = "3.44.0"
+    compileOnly("org.checkerframework:checker-qual:$checkerVersion")
+    testCompileOnly("org.checkerframework:checker-qual:$checkerVersion")
+    checkerFramework("org.checkerframework:checker:$checkerVersion")
 }
 
 checkstyle {
@@ -65,7 +138,7 @@ tasks.withType<Checkstyle>().configureEach {
 }
 
 jacoco {
-    toolVersion = "0.8.8"
+    toolVersion = "0.8.11"
 }
 
 tasks.jacocoTestCoverageVerification {
@@ -73,7 +146,7 @@ tasks.jacocoTestCoverageVerification {
         rule {
             isEnabled = true
             limit {
-                minimum = "0.5".toBigDecimal()
+                minimum = "1.0".toBigDecimal()
             }
         }
     }
@@ -89,8 +162,8 @@ tasks.jacocoTestReport {
         csv.required.set(false)
     }
 
-    doLast {
-        print(reports.html.outputLocation.get().toString() + "/index.html")
+    doFirst {
+        println(reports.html.outputLocation.get().toString() + "/index.html")
     }
 }
 
@@ -120,7 +193,6 @@ tasks.spotbugsTest {
 checkerFramework {
     checkers = listOf(
         "org.checkerframework.checker.nullness.NullnessChecker",
-        "org.checkerframework.checker.optional.OptionalChecker",
         "org.checkerframework.common.value.ValueChecker"
     )
     excludeTests = true
@@ -128,6 +200,10 @@ checkerFramework {
 }
 
 tasks.named<Test>("test") {
+
+    // Run tests in parallel
+    maxParallelForks = Runtime.getRuntime().availableProcessors().div(2).takeIf { it > 0 } ?: 1
+
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
 }

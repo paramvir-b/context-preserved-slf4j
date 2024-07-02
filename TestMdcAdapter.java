@@ -1,13 +1,11 @@
 package com.rokoder.concurrency.contextpreserved.logger.slf4j;
 
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.spi.MDCAdapter;
 
-/**
- * Test adapter for testing.
- */
 public class TestMdcAdapter implements MDCAdapter {
   private volatile Map<String, String> mdcContextMap = new HashMap<>();
 
@@ -40,5 +38,25 @@ public class TestMdcAdapter implements MDCAdapter {
   public synchronized void setContextMap(Map<String, String> contextMap) {
     mdcContextMap =
         contextMap == null ? new ConcurrentHashMap<>() : new ConcurrentHashMap<>(contextMap);
+  }
+
+  @Override
+  public void pushByKey(String key, String value) {
+    throw new IllegalStateException("Not implemented intentionally");
+  }
+
+  @Override
+  public String popByKey(String key) {
+    throw new IllegalStateException("Not implemented intentionally");
+  }
+
+  @Override
+  public Deque<String> getCopyOfDequeByKey(String key) {
+    throw new IllegalStateException("Not implemented intentionally");
+  }
+
+  @Override
+  public void clearDequeByKey(String key) {
+    throw new IllegalStateException("Not implemented intentionally");
   }
 }

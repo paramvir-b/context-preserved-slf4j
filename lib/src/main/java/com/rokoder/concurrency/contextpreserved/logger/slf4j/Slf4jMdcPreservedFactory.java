@@ -32,6 +32,8 @@ public final class Slf4jMdcPreservedFactory {
 
         @SuppressFBWarnings(value = "NP_METHOD_PARAMETER_TIGHTENS_ANNOTATION",
             justification = "It does not change nullness")
+        // MDC.setContextMap supports null arguments but does not declare arguments with @Nullable
+        // annotation. So disabling nullness check for this api
         @SuppressWarnings("nullness")
         @Override
         public void set(@Nullable Map<String, String> context) {
@@ -132,6 +134,7 @@ public final class Slf4jMdcPreservedFactory {
    * The new context is preserved for passed {@link Runnable} to {@link Executor#execute(Runnable)}
    *
    * @param executor Executor to be decorated
+   * @param newContext New context to be used to preserve
    * @return Newly created wrapped {@link Executor}
    */
   public static Executor newFixedContextExecutorFrom(Executor executor,
