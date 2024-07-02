@@ -23,7 +23,7 @@ repositories {
 }
 
 group = "com.rokoder.concurrency"
-version = "1.0.0-snapshot"
+version = "1.0.0"
 val artifactName = "context-preserved-slf4j"
 
 java {
